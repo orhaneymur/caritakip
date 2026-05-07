@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// --------------------------------------------------------------------
+// MULTI-TENANT & USER MANAGEMENT
+// --------------------------------------------------------------------
+
+model Organization {
+  id        String    @id @default(cuid())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft-delete
+
+  users     User[]
+  customers Customer[]
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+model User {
+  id             String       @id @default(cuid())
+  organizationId String
+  email          String       @unique
+  name           String?
+  role           Role         @default(STAFF)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?    // Soft-delete
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  transactions   Transaction[] // İşlemi kimin eklediğini takip etmek için
+}
+
+// --------------------------------------------------------------------
+// CORE ENTITIES
+// --------------------------------------------------------------------
+
+model Customer {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  phone          String?
+  email          String?
+  address        String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?    // Soft-delete (Arşiv)
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  transactions   Transaction[]
+}
+
+enum TransactionType {
+  DEBIT  // Borç (Müşterinin borçlanması)
+  CREDIT // Alacak (Müşterinin ödeme yapması)
+}
+
+model Transaction {
+  id             String          @id @default(cuid())
+  customerId     String
+  userId         String          // İşlemi yapan personel
+  type           TransactionType
+  actionType     String          @default("ODEME_AL") // ALACAK_EKLE, BORC_EKLE, ODEME_AL, ODEME_YAP
+  amount         Float
+  description    String?
+  date           DateTime        @default(now())
+  dueDate        DateTime?       // Vade Tarihi (Opsiyonel)
+  imageUrl       String?         // Kamera/Galeriden eklenen kanıt
+  
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?       // Soft-delete (Arşiv)
+
+  customer       Customer        @relation(fields: [customerId], references: [id])
+  user           User            @relation(fields: [userId], references: [id])
+}
