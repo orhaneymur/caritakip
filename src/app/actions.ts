@@ -2,10 +2,19 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 
 // Dummy Organization and User IDs for MVP
 const ORG_ID = "org_dummy_1";
 const USER_ID = "usr_dummy_1";
+
+// --- PRISMA TIPI TANIMLAMALARI ---
+// Prisma'nın include ile getirdiği alt ilişkileri (transactions) otomatik olarak tip haline getiriyoruz
+type CustomerWithTransactions = Prisma.CustomerGetPayload<{
+  include: { transactions: true }
+}>;
+
+type TransactionType = Prisma.TransactionGetPayload<{}>;
 
 // --- CUSTOMER (Cari) İŞLEMLERİ ---
 
@@ -61,19 +70,18 @@ export async function getCustomers() {
     orderBy: { createdAt: "desc" },
   });
 
-  // Bakiyeleri hesapla
-  return customers.map((c: any) => {
+  // Bakiyeleri hesapla (c parametresine CustomerWithTransactions tipini atadık)
+  return customers.map((c: CustomerWithTransactions) => {
     let totalDebit = 0; // Müşterinin bize borcu
     let totalCredit = 0; // Bizim müşteriye borcumuz (Tahsilat)
 
-    c.transactions.forEach(t => {
+    // t parametresine TransactionType tipini atadık
+    c.transactions.forEach((t: TransactionType) => {
       if (t.type === "DEBIT") totalDebit += t.amount;
       else totalCredit += t.amount;
     });
 
     const bakiye = Math.round((totalDebit - totalCredit) * 100) / 100;
-    // Eğer bakiye > 0 ise, müşteri bize borçludur (borc)
-    // Eğer bakiye < 0 ise, bizim ona borcumuz vardır (alacak)
     
     return {
       ...c,
@@ -100,7 +108,8 @@ export async function getCustomerById(id: string) {
   let totalDebit = 0; 
   let totalCredit = 0; 
 
-  customer.transactions.forEach(t => {
+  // t parametresine TransactionType tipini atadık
+  customer.transactions.forEach((t: TransactionType) => {
     if (t.type === "DEBIT") totalDebit += t.amount;
     else totalCredit += t.amount;
   });
@@ -214,7 +223,8 @@ export async function getDashboardStats() {
   // Müşteri bazında gruplamak lazım
   const customerBalances: Record<string, number> = {};
 
-  transactions.forEach(t => {
+  // t parametresine TransactionType tipini atadık
+  transactions.forEach((t: TransactionType) => {
     // Cari hesaplama
     if (!customerBalances[t.customerId]) customerBalances[t.customerId] = 0;
     if (t.type === "DEBIT") customerBalances[t.customerId] += t.amount;
@@ -228,7 +238,7 @@ export async function getDashboardStats() {
     }
   });
 
-  Object.values(customerBalances).forEach(balance => {
+  Object.values(customerBalances).forEach((balance: number) => {
     if (balance > 0) totalAlacak += balance;
     else if (balance < 0) totalBorc += Math.abs(balance);
   });
@@ -253,11 +263,10 @@ export async function getDashboardStats() {
   });
 
   // Sadece bakiyesi açık olan (henüz ödenmemiş) müşterilerin vade işlemlerini göster
+  // t parametresi için Prisma'nın otomatik çıkardığı ham tipi atadık
   const upcomingTransactions = upcomingTransactionsRaw.filter(t => {
     const bal = customerBalances[t.customerId] || 0;
-    // Eğer Alacak Ekle ise (DEBIT) ve müşterinin bize olan borcu varsa (bal > 0) göster
     if (t.type === "DEBIT" && bal > 0) return true;
-    // Eğer Borç Ekle ise (CREDIT) ve bizim müşteriye borcumuz varsa (bal < 0) göster
     if (t.type === "CREDIT" && bal < 0) return true;
     return false;
   });
