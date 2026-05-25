@@ -2,19 +2,18 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client"; // 1. BURAYA EKLEDİK
 
-// Dummy Organization and User IDs for MVP
-const ORG_ID = "org_dummy_1";
-const USER_ID = "usr_dummy_1";
-
-// --- PRISMA TIPI TANIMLAMALARI ---
-// Prisma'nın include ile getirdiği alt ilişkileri (transactions) otomatik olarak tip haline getiriyoruz
+// --- PRISMA TIPI TANIMLAMALARI --- // 2. BURAYA YERLEŞTİRİYORUZ
 type CustomerWithTransactions = Prisma.CustomerGetPayload<{
   include: { transactions: true }
 }>;
 
 type TransactionType = Prisma.TransactionGetPayload<{}>;
+
+// Dummy Organization and User IDs for MVP
+const ORG_ID = "org_dummy_1";
+const USER_ID = "usr_dummy_1";
 
 // --- CUSTOMER (Cari) İŞLEMLERİ ---
 
