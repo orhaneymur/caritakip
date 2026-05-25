@@ -62,7 +62,7 @@ export async function getCustomers() {
   });
 
   // Bakiyeleri hesapla
-  return customers.map(c => {
+  return customers.map((c: any) => {
     let totalDebit = 0; // Müşterinin bize borcu
     let totalCredit = 0; // Bizim müşteriye borcumuz (Tahsilat)
 
