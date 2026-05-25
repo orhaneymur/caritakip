@@ -10,7 +10,7 @@ export default function PublicCariPage({ params }: { params: Promise<{ token: st
   // Dummy data (Normalde token ile veritabanından çekilir)
   const firmaAdi = "Örnek Ticaret A.Ş.";
   const musteriAdi = "Orhan Eymur";
-  const bakiye = 5000;
+  const bakiye: number = 5000;
   const isAlacakli = true; // Bizim alacağımız var, müşteri bize borçlu. Yani müşterinin ekranında "Borcunuz" yazacak.
 
   return (
