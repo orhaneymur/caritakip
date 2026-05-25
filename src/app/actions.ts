@@ -71,14 +71,14 @@ export async function getCustomers() {
 
   // Bakiyeleri hesapla (c parametresine CustomerWithTransactions tipini atadık)
   return customers.map((c: CustomerWithTransactions) => {
-    let totalDebit = 0; // Müşterinin bize borcu
-    let totalCredit = 0; // Bizim müşteriye borcumuz (Tahsilat)
+  let totalDebit = 0;
+  let totalCredit = 0;
 
-    // t parametresine TransactionType tipini atadık
-    c.transactions.forEach((t: TransactionType) => {
-      if (t.type === "DEBIT") totalDebit += t.amount;
-      else totalCredit += t.amount;
-    });
+  // t parametresine TransactionType tipini verdik
+  c.transactions.forEach((t: TransactionType) => {
+    if (t.type === "DEBIT") totalDebit += t.amount;
+    else totalCredit += t.amount;
+  });
 
     const bakiye = Math.round((totalDebit - totalCredit) * 100) / 100;
     
